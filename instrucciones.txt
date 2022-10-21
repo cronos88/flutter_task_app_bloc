@@ -1,0 +1,22 @@
+PROYECTO INICIAL
+================
+1. Creamos una carpeta en lib/ llamada models/ y creamos un archivo llamado task.dart
+
+- Creamos la clase Task con sus propiedades: title, isDone, isDeleted.
+- Creamos el constructor e inicializamos isDone y isDeleted
+- Creamos una copia de la clase con copyWith. Lo que hace copyWith es que no cambia la instancia en la que se 
+llama, sino que crea una nueva instancia que comparte valores de campo idénticos al original.
+
+- Creamos el Json Serialization del modelo Task y borramos las líneas que no usaremos, por ejemplo Dart:conveter y las
+líneas de abajo que marcan con error.
+
+- Luego a la clase Task la extendemos de Equatable y luego implementamos el método requerido con las propiedades
+de Task.
+
+2. En TaskScreen creamos una lista temporal con 3 tareas y luego creamos un List Builder debajo del Center, para
+mostrar la lista temporal. Si sale un error ex porque como la lista esta compartiendo el la pantalla con el Chip que 
+tenemos arriba, entonces no puede calcular el espacio disponible. Para eso envolvemos el ListView.Builder con el widget
+Expand.
+
+
+
