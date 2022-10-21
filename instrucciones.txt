@@ -18,5 +18,64 @@ mostrar la lista temporal. Si sale un error ex porque como la lista esta compart
 tenemos arriba, entonces no puede calcular el espacio disponible. Para eso envolvemos el ListView.Builder con el widget
 Expand.
 
+IMPLEMENTACION DE BLOC EN LA APP
+================================
+3. En la carpeta lib/ creamos una carpeta llamada blocs/ y dentro de ella creamos un archivo llamado bloc_exports.dart.
+4. Hacemos clic derecho en la carpeta blocs y seleccionamos la opción "Bloc: new bloc" y le colocamos por nombre tasks.
+Luego renonbramos la carpeta bloc para que quede como tasks.
+5. En el archivo tasks_state creamos una lista de tipo Task llamada allTasks y la colocamos en el constructor y la
+iniciamos en una lista vacía, además colocamos esta propiedad en el Equatable. Además borramos la palabra abstract en la
+clase TaskState.
+
+    part of 'tasks_bloc.dart';
+
+    class TasksState extends Equatable {
+    final List<Task> allTasks;
+    const TasksState({this.allTasks = const <Task>[]});
+
+    @override
+    List<Object> get props => [allTasks];
+    }
+
+6. Luego, implementamos tasks_events, el cual va a tener 3 eventos: AddTask, UpdateTask y DeleteTask.
+7. Luego, vamos a implementar tasks_bloc. Aquí nosotros controlamos los eventos y emitimos nuevos estados de tareas.
+En cada evento le decimos al bloc que debería hacer, y por cada evento nosotros escribimos su lógica.
+
+La función onAddTask recibe el evento actual y emisor. Aquí solo emitimos nuevo estado con nueva lista de tareas añadiendo
+nuevo objecto evento de tarea a la lista total del estado.
+
+Las funciones onUpdateTask y onDeleteTask las dejamos por ahora vacías.
+
+8. En el archivo Task_Screen vamos a extraer el listView.Builder, para eso hacemos CTRL + . en el widget Expanded
+que envuelve el listview.Builder y seleccionamos la opcion Extract Widget y escribimos por nombre TasksList. Luego selecciono
+toda la clase TasksList y la corto. Luego en la carpeta lib/ creamos una carpeta llamada widgets/ y dentro de ella un
+archivo llamado tasks_list.dart y luego pegamos la clase TasksList. En el Task_Screen importamos el TasksList.
+
+9. En el Task_Screen ya no necesitamos la lista task_list, la borramos.
+
+10. En el main.dart, seleccionamos MaterialApp y con CTRL + . seleccionamos bloc_provider y le colocamos como provider
+TasksBloc().
+
+11. En el archivo bloc_exports.dart exportamos tasks_bloc y flutter_bloc:
+
+    export './tasks/tasks_bloc.dart';
+    export 'package:flutter_bloc/flutter_bloc.dart';
+
+12. Regresamos a main.dart e importamos el archivo bloc_exports.dart. También envolvemos runApp con BlocOverrides.runZoned:
+
+    void main() {
+        BlocOverrides.runZoned(
+            () => runApp(const MyApp()),
+        );
+    }
+
+13. Ahora podemos implementar task bloc en TaskScreen, para eso en TaskScreen envolvemos el Scaffold con Bloc_builder y
+que reciba TasksBloc y TasksState. Dentro del builder creamos una lista de tipo Task llamada tasksList y la igualamos con
+state.allTasks:  final List<Task> taskList = state.allTasks;
+
+Por el momento, vamos a tener una tarea para hacer la prueba y verla en la pantalla, entonces en el main.dart, en el
+BlocProvider, cambiamos el parámetro create por este, mientras tanto:
+
+    create: (context) => TasksBloc()..add(AddTask(task: Task(title: 'Task1'))),
 
 
