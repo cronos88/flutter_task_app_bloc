@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Task App',
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: const TaskScreen(),
+        home: TaskScreen(),
       ),
     );
   }

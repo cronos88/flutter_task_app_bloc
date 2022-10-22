@@ -79,3 +79,59 @@ BlocProvider, cambiamos el parámetro create por este, mientras tanto:
     create: (context) => TasksBloc()..add(AddTask(task: Task(title: 'Task1'))),
 
 
+AÑADIENDO BOTTOM SHEET PARA NUEVAS TAREAS
+=========================================
+
+14. En la pantalla TaskScreen, creamos una función llamada _addTask y un controlador llamado _titleController, todo antes
+del método build().
+
+15. Creamos también un FloatingActionButton, el cual permite mostrar el BottomSheet, paera añadir una tarea.
+
+    floatingActionButton: FloatingActionButton(
+        onPressed: () => _addTask(context),
+        tooltip: 'Add Task',
+        child: const Icon(Icons.add),
+    ),
+
+16. Como el SingleChildScrollView es muy grande, entonces Extraemos el child en un nuevo widget llamado AddTaskScreen.
+
+17. Debajo del TextField, añadimos 2 botones, uno para cancelar y otro para añadir una tarea.
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    var task = Task(title: _titleController.text);
+                    context.read<TasksBloc>().add(AddTask(task: task));
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+
+18. Como AddTaskScreen es muy grande, vamos a pasarlo a un archivo separado, para eso, en la carpeta Screen/ creamos
+otro archivo llamado add_task_screen.dart, Luego cortamos la clase AddTaskScreen de la pantalla TaskScreen y la pasamos
+al archivo add_task_screen.dart.
+
+Nota: Una cosa importante, en el TaskScreen, cuando se llama a AddTaskScreen, no enviemos el titleController como 
+parámetro, lo que hacemos es quitarlo y luego seleccionamos la línea donde declaramos titleController y lo cortamos.
+Luego, en el AddTaskScreen, lo pegamos en el metodo build() antes del return. El constructor queda así:
+
+    const AddTaskScreen({Key? key}) : super(key: key);
+
+19. Aqui hay un bug que cuando hacemos un Hot Restart y agregamos una nueva tarea, no escribe. Para eso vamos a TaskScreen
+y convertimos la clase para que extienda de StatefulWidget.
+
+20. El IconButton que está en el action del AppBar, llamamos también el método _addTask para que aparezca el BottomSheet:
+
+              IconButton(
+                onPressed: () => _addTask(context),
+                icon: const Icon(Icons.add),
+              ),
+
