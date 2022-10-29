@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'blocs/bloc_exports.dart';
-import 'models/task.dart';
 import 'screens/task_screen.dart';
 
 void main() {
@@ -16,16 +15,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          TasksBloc()..add(AddTask(task: Task(title: 'Task1'))),
+      create: (context) => TasksBloc(),
       child: MaterialApp(
         title: 'Flutter Task App',
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: TaskScreen(),
+        home: const TaskScreen(),
       ),
     );
   }
 }
 
 // https://www.youtube.com/watch?v=PD0eAXLd5ls&list=PL4KQIoSGkL6uHbPnb1-bcWE07KT9aohQ-&index=9
-// QUEDAMOS EN MINUTO 19:42
+// QUEDAMOS EN MINUTO 34:35

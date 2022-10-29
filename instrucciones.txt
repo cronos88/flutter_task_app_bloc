@@ -135,3 +135,64 @@ y convertimos la clase para que extienda de StatefulWidget.
                 icon: const Icon(Icons.add),
               ),
 
+IMPLEMENTAR ACTUALIZAR TAREA
+============================
+
+21. En el archivo task_bloc.dart escribimos el método _onUpdateTask así:
+
+void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    final task = event.task;
+
+    List<Task> allTasks = List.from(state.allTasks)..remove(task);
+    task.isDone == false
+        ? allTasks.add(task.copyWith(isDone: true))
+        : allTasks.add(task.copyWith(isDone: false));
+
+    emit(TasksState(allTasks: allTasks));
+  }
+
+22. En el widget task_list.dart, la propiedad onchanged del Checkbox del ListTile, lo seteamos así:
+
+  onChanged: (value) {
+    context.read<TasksBloc>().add(UpdateTask(task: task));
+  },
+
+23. Al probar la app, los Checkbox funcionan raro, ya que al quitarle el check a uno, se los quita al resto.
+Para arreglar eso tenemos que usar in indice para saber que tarea estamos haciendo check y luego en vez de
+usar add, usamos insert, para colocar tambien el indice:
+
+  void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    final task = event.task;
+    final int index = state.allTasks.indexOf(task);
+
+    List<Task> allTasks = List.from(state.allTasks)..remove(task);
+    task.isDone == false
+        ? allTasks.insert(index, task.copyWith(isDone: true))
+        : allTasks.insert(index, task.copyWith(isDone: false));
+
+    emit(TasksState(allTasks: allTasks));
+  }
+
+IMPLEMENTAR BORRAR TAREA
+========================
+
+24. En tasks_bloc.dart, escribimos el método _onDeleteTask asi:
+
+  void _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+
+    emit(TasksState(allTasks: List.from(state.allTasks)..remove(event.task)));
+  }
+
+25. En el widget task_list.dart, en el ListTile, agregamos otra propiedad llamada onLongPress así:
+
+  onLongPress: (() => context.read<TasksBloc>().add(DeleteTask(task: task))),
+
+26. Removemos la tarea inicial que teníamos en main.dart, para eso, el create de BlocProvider lo dejamos
+así:
+
+  create: (context) => TasksBloc(),
+
+27. 
