@@ -195,4 +195,88 @@ así:
 
   create: (context) => TasksBloc(),
 
-27. 
+ALMACENAR EL ESTADO EN MEMORIA DEL DISPOSITIVO
+==============================================
+
+27. En el pubspec.yaml agregamos una nueva dependencia llamada Hydrated_bloc.
+28. En bloc_exports.dart exportamos el paquete hydrated_bloc:
+
+    export 'package:hydrated_bloc/hydrated_bloc.dart';
+
+29. Vamos al archivo task_bloc.dart y cambiamos la clase para que extienda de HydratedBloc y luego 
+implementamos los 2 requerimientos necesarios.
+
+30. Vamos a task_state.dart y en el nombre de la clase TaskState presionamos CTRL + . y seleccionamos
+la opcion Generate JSON serialization y luego hacemos lo siguiente aquí:
+
+  - borramos la línea: import 'dart:convert';
+  - borramos esta línea: String toJson() => json.encode(toMap());
+  - borramos esta línea: factory TasksState.fromJson(String source) => TasksState.fromMap(json.decode(source) as Map<String, dynamic>);
+  - Dejamos los 2 métodos toMap y fromMap así:
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'allTasks': allTasks.map((x) => x.toMap()).toList(),
+    };
+  }
+
+  factory TasksState.fromMap(Map<String, dynamic> map) {
+    return TasksState(
+      allTasks: List<Task>.from(
+        (map['allTasks']?.map<Task>(
+          (x) => Task.fromMap(x),
+        )),
+      ),
+    );
+  }
+
+
+31. En task_bloc.dart, los métodos fromJson y toJson los dejamos así:
+
+  @override
+  TasksState? fromJson(Map<String, dynamic> json) {
+    return TasksState.fromMap(json);
+  }
+
+  @override
+  Map<String, dynamic>? toJson(TasksState state) {
+    return state.toMap();
+  }
+
+32. Instalamos el paquete path_provider En main.dart, en la funcion main, dejamos así:
+
+  void main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    final storage = await HydratedStorage.build(
+        storageDirectory: await getApplicationDocumentsDirectory());
+    HydratedBlocOverrides.runZoned(
+      () => runApp(const MyApp()),
+      storage: storage,
+  );
+}
+
+33. Al probar la app hasta ahora, hydrated bloc funciona bien, pero tenemos un pequeño bug, cuando añadimos
+varias tareas con el mismo nombre, el checkbox no funciona bien al seleccionarlo en esas tareas que son
+iguales. Para eso tenemos que añadir un taskId al modelo Task.
+
+34. Vamos al modelo Task y añadimos la propiedad id en la clase Task, en el constructor, en el copyWith, en el
+toMap, en el fromMap y en los props.
+
+35. En la carpeta lib/ creamos una carpeta llamada services/ y dentro de ella un archivo llamado guid_gen.dart
+el cual contendrá un método llamado generate() el cual genera un número aleatorio de 16 bits.
+
+36. En add_task_screen.dart, el widget ElevatedButton le añadimos el id:
+
+  ElevatedButton(
+    onPressed: () {
+      var task = Task(
+        title: titleController.text,
+        id: GUIDGen.generate(), // linea nueva
+      );
+      context.read<TasksBloc>().add(AddTask(task: task));
+      Navigator.pop(context);
+    },
+    child: const Text('Add'),
+  ),
+
+37. 
