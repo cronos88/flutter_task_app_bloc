@@ -279,4 +279,333 @@ el cual contendrá un método llamado generate() el cual genera un número aleat
     child: const Text('Add'),
   ),
 
-37. 
+37. En el task_list.dart, vamos al ListTile del ListView y lo extraemos a un widget llamado TaskTile para
+que el ListView quede más simple. Llamamos al widget TaskTile. Luego seleccionamos toda la clase TaskTile y 
+la cortamos, luego en la carpeta widgets/ creamos otro archivo llamado task_tile.dart y luego pegamos la
+clase TaskTile ahi.
+
+38. En task_screen.dart, vamos al texto del Chip y lo cambiamos para que muestre el número de tareas que
+hay: 
+
+  Center(
+    child: Chip(
+      label: Text('${state.allTasks.length} Tasks'),
+    ),
+  ),
+
+ADD NAVIGATION DRAWER
+=====================
+39. En la carpeta screens/ creamos un nuevo archivo llamado my_drawer.dart y creamos un drawer así:
+
+import 'package:flutter/material.dart';
+
+class MyDrawer extends StatelessWidget {
+  const MyDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Drawer(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+              color: Colors.grey,
+              child: Text(
+                'Text Drawer',
+                style: Theme.of(context).textTheme.headline5,
+              ),
+            ),
+            const ListTile(
+              leading: Icon(Icons.folder_special),
+              title: Text('My Tasks'),
+              trailing: Text('0'),
+            ),
+            const Divider(),
+            const ListTile(
+              leading: Icon(Icons.delete),
+              title: Text('Bin'),
+              trailing: Text('0'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+40. En TaskScreen, agregamos el drawer en el Scaffold:
+
+  drawer: const MyDrawer(),
+
+Recycler Bin Folder
+-------------------
+
+41. Ahora vamos a implementar el recycle Bin Folder, para eso en la carpeta screens/  creamos un archivo llamado
+recycle_bin.dart:
+
+class RecycleBin extends StatelessWidget {
+  const RecycleBin({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recycle Bin'),
+        actions: [
+          IconButton(
+            onPressed: () => {},
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+      drawer: const MyDrawer(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          Center(
+            child: Chip(
+              label: Text('Tasks'),
+            ),
+          ),
+          TasksList(taskList: []),
+        ],
+      ),
+    );
+  }
+}
+
+42. Vamos a implementar la rutas de la app, para eso vamos a la carpeta services/ y creamos un archivo
+llamado app_router.dart.
+
+43. Antes de implementar las rutas, vamos a darle un id estático a cada página que nosotros vamos a 
+navegar:
+
+  - En TasksScreen colocamos la linea despues del constructor: static const id = 'tasks_screen';
+  - En RecycleBin colocamos la línea despues del constructor: static const id = 'recycle_bin_screen';
+  
+44. De vuelta en app_router.dart, creamos las rutas así:
+
+class AppRouter {
+  Route? onGenerateRoute(RouteSettings routeSettings) {
+    switch (routeSettings.name) {
+      case RecycleBin.id:
+        return MaterialPageRoute(
+          builder: (_) => const RecycleBin(),
+        );
+      case TaskScreen.id:
+        return MaterialPageRoute(
+          builder: (_) => const TaskScreen(),
+        );
+      default:
+        return null;
+    }
+  }
+}
+
+45. En el archivo my_drawer, a cada ListTile lo envolvemos con un GestureDetector:
+
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(TaskScreen.id),
+              child: const ListTile(
+                leading: Icon(Icons.folder_special),
+                title: Text('My Tasks'),
+                trailing: Text('0'),
+              ),
+            ),
+            const Divider(),
+            GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(RecycleBin.id),
+              child: const ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Bin'),
+                trailing: Text('0'),
+              ),
+            ),
+
+46. En main.dart, hacemos unos cambios:
+
+  - En MyApp colocamos la siguiente propiedad: final AppRouter appRouter; y añadir al constructor required.
+  - En MaterialApp colocamos la siguiente propiedad: onGenerateRoute: appRouter.onGenerateRoute,
+  - En la funcion main() especificamos el appRoute en el runApp así:
+
+      HydratedBlocOverrides.runZoned(
+        () => runApp(
+          MyApp(
+           appRouter: AppRouter(),
+          ),
+        ),
+        storage: storage,
+      );
+
+47. Luego, vamos a implementar los contadores del Drawer, para eso, en MyDrawer, en el primer ListTile
+envolvemos el GestureDetector con un BlocBuilder de tipo TasksBloc y TastState, y luego el trailing del
+ListTile lo dejamos así: trailing: Text('${state.allTasks.length}'),
+
+48. Para el contador de tareas borradas, en bloc/ vamos a task_state.dart y hacemos lo sigueinte:
+
+  - añadimos otra nueva propiedad llamada removedTasks: final List<Task> removedTasks;
+  - luego, la añadimos al constructor:
+      const TasksState({
+       this.allTasks = const <Task>[],
+       this.removedTasks = const <Task>[],
+      });
+  
+  - Añadimos la propiedad al equatable:
+
+      @override
+      List<Object> get props => [allTasks, removedTasks];
+
+  - Añadimos también removedTasks al método toMap():
+
+    Map<String, dynamic> toMap() {
+      return <String, dynamic>{
+        'allTasks': allTasks.map((x) => x.toMap()).toList(),
+        'removedTasks': removedTasks.map((x) => x.toMap()).toList(),
+      };
+    }
+
+  - Añadimos también removedTasks en el método fromMap():
+
+    factory TasksState.fromMap(Map<String, dynamic> map) {
+      return TasksState(
+        allTasks: List<Task>.from((map['allTasks']?.map<Task>((x) => Task.fromMap(x)))),
+        removedTasks: List<Task>.from((map['removedTasks']?.map<Task>((x) => Task.fromMap(x)))),
+      );
+    }
+
+49. En bloc/tasks_event.dart, creamos una clase llamada RemovedTasks:
+
+  class RemoveTask extends TasksEvent {
+    final Task task;
+
+    const RemoveTask({
+      required this.task,
+    });
+
+    @override
+    List<Object> get props => [task];
+  }
+
+50. En bloc/tasks_bloc.dart hacemos estos cambios:
+
+  - Agregamos on<RemoveTask>(_onRemoveTask); al comienzo de la clase TasksBloc.
+  - Agregamos un método llamado _onRemoveTask:
+
+    void _onRemoveTask(RemoveTask event, Emitter<TasksState> emit) {
+      final state = this.state;
+
+      emit(TasksState(
+        allTasks: List.from(state.allTasks)..remove(event.task),
+        removedTasks: List.from(state.removedTasks)
+          ..add(event.task.copyWith(isDeleted: true)),
+      ));
+    }
+
+51. En my_drawer.dart, envolvemos el GestureDetector del ListTile del delete con BlocBuilder:
+
+    BlocBuilder<TasksBloc, TasksState>(
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pushNamed(RecycleBin.id),
+          child: ListTile(
+            leading: const Icon(Icons.delete),
+            title: const Text('Bin'),
+            trailing: Text('${state.removedTasks.length}'),
+          ),
+        );
+      },
+    ),
+
+52. En Screens/recycle_bin.dart, hacemos lo siguiente:
+
+  - Envolvemos el Scaffold con un BlocBuilder:
+
+    @override
+    Widget build(BuildContext context) {
+      return BlocBuilder<TasksBloc, TasksState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+          ...
+
+  - El label del Chip lo modificamos así:
+
+    label: Text('${state.removedTasks.length}'),
+
+  - La línea TaskList la dejamos así:
+
+    TasksList(taskList: state.removedTasks),          
+
+53. En el archivo Task_tile.dart, hacemos lo siguiente: 
+
+  - creamos un método llamado _removeOrDeleteTask() antes del método build:
+
+    void _removeOrDeleteTask(BuildContext ctx, Task task) {
+      task.isDeleted!
+          ? ctx.read<TasksBloc>().add(DeleteTask(task: task))
+          : ctx.read<TasksBloc>().add(RemoveTask(task: task));
+    }
+
+  - En el evento onLongPress del checkbox lo cambiamos así:
+
+    onLongPress: (() =>
+          _removeOrDeleteTask(context, task)),  
+
+54. Probamos la app. Al añadir tareas y luego borramos unas de ellas, en el Drawer aparece la cantidas
+de tareas borradas, pero si vamos a añadir otras tareas, la pantalla donde mueestra las tareas borradas
+no muestra nada. Eso es un bug, para eso vamos a Tasks_bloc.dart y en el método _onAddTask añadimos
+en el emit el removesTasks así:
+
+  void _onAddTask(AddTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    emit(TasksState(
+      allTasks: List.from(state.allTasks)..add(event.task),
+      removedTasks: state.removedTasks,
+    ));
+  }
+
+55. Probamos la app y al añadir más tareas, la pantalla de Recycle Bin sigue mostrando las tareas borradas.
+
+56. Lo mismo ocurre cuando actualizamos una tarea, se desaparecen las tareas borradas, para eso en El
+método _onUpdateTask agregamos el removedTasks así:
+
+  void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    final task = event.task;
+    final int index = state.allTasks.indexOf(task);
+
+    List<Task> allTasks = List.from(state.allTasks)..remove(task);
+    task.isDone == false
+        ? allTasks.insert(index, task.copyWith(isDone: true))
+        : allTasks.insert(index, task.copyWith(isDone: false));
+
+    emit(TasksState(allTasks: allTasks, removedTasks: state.removedTasks)); ----> ESTA LINEA
+  }
+
+57. En el método _onRemoveTask lo acondicionamos así:
+
+  void _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+
+    emit(TasksState(
+      allTasks: state.allTasks,
+      removedTasks: List.from(state.removedTasks)..remove(event.task),
+    ));
+  }
+
+58. En la pantalla RecycleBin vemos que las tareas borradas tienen checkbox. Esos no las necesitamos,
+ya que una tarea borrada no puede ser actualizada, para eso, en list_tile.dart, en el checkbox colocamos 
+una condicion de que si la tarea esta borrada entonces no haga nada:
+
+  trailing: Checkbox(
+    value: task.isDone,
+    onChanged: task.isDeleted == false
+        ? (value) {
+            context.read<TasksBloc>().add(UpdateTask(task: task));
+          }
+        : null,
+  ),
+
+

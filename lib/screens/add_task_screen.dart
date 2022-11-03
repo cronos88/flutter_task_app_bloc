@@ -14,7 +14,7 @@ class AddTaskScreen extends StatelessWidget {
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20, bottom: 20),
         child: Column(
           children: [
             const Text(
