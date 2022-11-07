@@ -733,3 +733,28 @@ MaterialApp con un BlocBuilder y usar SwitchBloc, en el archivo main.dart:
 
 73. Al probar la app, el switch cambia el tema de claro a oscuro.
 
+ALMACENAR EL ESTADOS DEL SWITCH EN EL DISPOSITIVO CON HYDRATED BLOC
+===================================================================
+
+74. En el archivo switch_state.dart hacemos clic en el nombre de la clase SwitchState y hacemos clic
+para seleccionar el nombre, luego presionamos CTRL + . y seleccionamos la opcion Generate JSON Serialization.
+
+  - Borramos la línea: import 'dart:convert';
+  - Borramos la línea: String toJson() => json.encode(toMap());
+  - Borramos la línea: factory SwitchState.fromJson(String source) => SwitchState.fromMap(json.decode(source) as Map<String, dynamic>);
+
+75. En el archivo switch_bloc.dart hacemos lo siguiente: 
+
+  - Cambiamos el extends de SwitchBloc de Bloc a HydratedBloc.
+  - Impementamos los 2 métodos obligatorios que nos pide.
+  
+  @override
+  SwitchState? fromJson(Map<String, dynamic> json) {
+    return SwitchState.fromMap(json);
+  }
+
+  @override
+  Map<String, dynamic>? toJson(SwitchState state) {
+    return state.toMap();
+  }
+
