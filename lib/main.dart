@@ -4,19 +4,28 @@ import 'package:path_provider/path_provider.dart';
 import 'blocs/bloc_exports.dart';
 import 'screens/task_screen.dart';
 import 'services/app_router.dart';
+import 'services/app_theme.dart';
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   final storage = await HydratedStorage.build(
+//       storageDirectory: await getApplicationDocumentsDirectory());
+//   HydratedBlocOverrides.runZoned(
+//     () => runApp(
+//       MyApp(
+//         appRouter: AppRouter(),
+//       ),
+//     ),
+//     storage: storage,
+//   );
+// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final storage = await HydratedStorage.build(
+  HydratedBloc.storage = await HydratedStorage.build(
       storageDirectory: await getApplicationDocumentsDirectory());
-  HydratedBlocOverrides.runZoned(
-    () => runApp(
-      MyApp(
-        appRouter: AppRouter(),
-      ),
-    ),
-    storage: storage,
-  );
+
+  runApp(MyApp(appRouter: AppRouter()));
 }
 
 class MyApp extends StatelessWidget {
@@ -26,17 +35,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => TasksBloc(),
-      child: MaterialApp(
-        title: 'Flutter Task App',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: const TaskScreen(),
-        onGenerateRoute: appRouter.onGenerateRoute,
+    return MultiBlocProvider(
+      // create: (context) => TasksBloc(),
+      providers: [
+        BlocProvider(create: (context) => TasksBloc()),
+        BlocProvider(create: (context) => SwitchBloc()),
+      ],
+      child: BlocBuilder<SwitchBloc, SwitchState>(
+        builder: (context, state) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Flutter Task App',
+            theme: state.switchValue
+                ? AppThemes.appThemeData[AppTheme.darkTheme]
+                : AppThemes.appThemeData[AppTheme.lightTheme],
+            home: const TaskScreen(),
+            onGenerateRoute: appRouter.onGenerateRoute,
+          );
+        },
       ),
     );
   }
 }
 
 // https://www.youtube.com/watch?v=PD0eAXLd5ls&list=PL4KQIoSGkL6uHbPnb1-bcWE07KT9aohQ-&index=9
-// QUEDAMOS EN MINUTO 1:05:45
+// QUEDAMOS EN MINUTO 1:13:13

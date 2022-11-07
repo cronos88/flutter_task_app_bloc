@@ -608,4 +608,128 @@ una condicion de que si la tarea esta borrada entonces no haga nada:
         : null,
   ),
 
+59. En el Drawer estamos cambiando de una pabtalla a otra. Esto hace que se forme una pila de pantallas,
+lo cual puede comprometer el rendimiento en memoria de la app. Para eso, vamos a reemplazar en los
+Navigaror, el pushNamed por pushReplacementNamed.
+
+IMPLEMENTAR SWITCH EN EL DRAWER
+===============================
+60. En my_drawer.dart, debajo del BlocBuilder, colocamos el Widget Swtich
+
+  Switch(value: false, onChanged: (newValue) {}),
+
+61. La clase MyDrawer la convertimos a StatefulWidget. Luego en la clase State, creamos una variable
+de tipo bool llamada switchValue y con valor false.
+
+62. El Switch entonces lo dejamos así para utilizar la nueva variable y el setState para cambiar el estado.
+
+  Switch(
+    value: switchValue,
+    onChanged: (newValue) {
+      setState(() {
+        switchValue = newValue;
+      });
+    },
+  ),
+
+63. Implementaremos bloc, quiere decir, vamos a crear un nuevo bloc llamado Switch, para ello hacemos clic
+derecho en la carpeta blocs/ y seleccionamos la opción Bloc: New Bloc y escribimos por nombre switch. La
+carpeta bloc/ que crea le cambiamos el nombre a switch.
+
+64. En el archivo bloc_exports.dart, agregamos otra exportación para el bloc Switch:
+
+  export './switch/switch_bloc.dart';
+
+65. En el archivo switch_state.dart, vamos a crear el estado para el switchValue:
+
+  class SwitchState extends Equatable {
+    final bool switchValue;
+    const SwitchState({required this.switchValue});
+
+    @override
+    List<Object> get props => [switchValue];
+  }
+
+  class SwitchInitial extends SwitchState {
+    const SwitchInitial({required super.switchValue});
+  }
+
+66. En el archivo switch_event.dart, creamos dos eventos, SwitchOnEvent y SwitchOffEvent:
+
+  abstract class SwitchEvent extends Equatable {
+    const SwitchEvent();
+
+    @override
+    List<Object> get props => [];
+  }
+
+  class SwitchOnEvent extends SwitchEvent {}
+  class SwitchOffEvent extends SwitchEvent {}
+
+67. En el archivo switch_bloc.dart, vamos a fijar el valor inicial de switchValue a false y a emitir los
+eventos:
+
+  class SwitchBloc extends Bloc<SwitchEvent, SwitchState> {
+    SwitchBloc() : super(const SwitchInitial(switchValue: false)) {
+      on<SwitchOnEvent>((event, emit) {
+        emit(
+          const SwitchState(switchValue: true),
+        );
+      });
+      on<SwitchOffEvent>((event, emit) {
+        emit(
+          const SwitchState(switchValue: false),
+        );
+      });
+    }
+  }
+
+68. En la carpeta services/ creamos un nuevo archivo llamado app_theme.dart y colocamos los temas de la
+app.
+
+69. En el archivo main.dart, vamos a colocar el otro bloc que creamos, pero como tenemos 2 blocs, entonces
+en el método Build de MyApp cambiamos el BlocProvider por MultiBlocProvider y colocamos los 2 blocs:
+
+return MultiBlocProvider(
+  // create: (context) => TasksBloc(),
+  providers: [
+    BlocProvider(create: (context) => TasksBloc()),
+    BlocProvider(create: (context) => SwitchBloc()),
+  ],
+
+70. Ahora, en my_drawer.dart vamos a implementar el Bloc de Switch, para eso envolvemos el widget Switch con
+un BlocBuilder y señalamos el bloc SwitchBloc:
+
+  BlocBuilder<SwitchBloc, SwitchState>(
+    builder: (context, state) {
+      return Switch(
+        value: state.switchValue,
+        onChanged: (newValue) {
+          newValue
+              ? context.read<SwitchBloc>().add(SwitchOnEvent())
+              : context.read<SwitchBloc>().add(SwitchOffEvent());
+        },
+      );
+    },
+  ),
+
+71. También, vamos a convertir la clase MyDrawer a StatelessWidget.
+
+72. Como necesitamos cambiar el tema de la aplicación, entonces tsmbién necesitamos envolver el widget
+MaterialApp con un BlocBuilder y usar SwitchBloc, en el archivo main.dart:
+
+    child: BlocBuilder<SwitchBloc, SwitchState>(
+      builder: (context, state) {
+        return MaterialApp(
+          title: 'Flutter Task App',
+          theme: state.switchValue
+              ? AppThemes.appThemeData[AppTheme.darkTheme]
+              : AppThemes.appThemeData[AppTheme.lightTheme],
+          home: const TaskScreen(),
+          onGenerateRoute: appRouter.onGenerateRoute,
+        );
+      },
+    ),
+
+73. Al probar la app, el switch cambia el tema de claro a oscuro.
 
