@@ -1073,5 +1073,108 @@ FavoriteTasksScreen, para eso, en tabs_screen.dart colocamos una condicion en el
         child: const Icon(Icons.add),
       ) : null,
 
- 
+EXPANSION PANEL EN LAS TAREAS
+=============================
+101. Vamos al archivo tasks_list.dart y cortamos todo el widget Expanded y lo pegamos debajo de la clase
+TaskList, y comentamos esas líneas. Luego en el return colocamos lo siguiente:
+
+    ExpansionPanelList.radio(
+      children: taskList
+          .map(
+            (task) => ExpansionPanelRadio(
+              value: task.id,
+              headerBuilder: (context, isOpen) => TaskTile(task: task),
+              body: const Text('description'),
+            ),
+          )
+          .toList(),
+    );
+
+102. En el modelo vamos a implementar la descripción, para eso abrimos el archivo modesl/task.dark y
+añadimos la propiedad description, también agregamos la propiedad description requerida en las demás
+partes del modelo.
+
+103. En el archivo add_task_screen.dart, tenemos que usa description, para eso añadimos otro
+TextEditingController llamado descriptionController:
+
+  final TextEditingController descriptionController = TextEditingController();
+
+104. Después añadimos otro TextField para la descripción:
+
+  TextField(
+    autofocus: true,
+    controller: descriptionController,
+    minLines: 3,
+    maxLines: 5,
+    decoration: const InputDecoration(
+      label: Text('Description'),
+      border: OutlineInputBorder(),
+    ),
+  ),
+
+105. En el ElevatedButton, agregamos el controlador de descripción:
+
+  ElevatedButton(
+    onPressed: () {
+      var task = Task(
+        title: titleController.text,
+        description: descriptionController.text, // linea nueva
+        id: GUIDGen.generate(),
+      );
+      context.read<TasksBloc>().add(AddTask(task: task));
+      Navigator.pop(context);
+    },
+    child: const Text('Add'),
+  ),
+
+106. Al agregar una tarea, los botones no se ven, están muy abajo. Para eso vamos al archivo tabs_screen.dart
+y en el método _addTask, vamos a showModalBottomSheet y añadimos la propiedad isScrollControlled a true:
+
+void _addTask(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,  // nueva línea
+      builder: ((context) => const SingleChildScrollView(
+            child: AddTaskScreen(),
+          )),
+    );
+  }
+
+107.Nos vamos al archivo tasksList.dart y cambiamos el body del ExpansionPanelRadio para albergar la
+descripción:
+
+    body: ListTile(
+      title: SelectableText.rich(
+        TextSpan(
+          children: [
+            const TextSpan(
+              text: 'Text\n',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: task.title),
+            const TextSpan(
+              text: '\n\nDescription\n',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: task.description),
+          ],
+        ),
+      ),
+    ),
+
+108. Al agregar tareas, vemos que se produce un error de overflow o desbordamiento, para eso hay que 
+envolver el widget ExpansionPanelList.radio con un SingleChildScrollView y luego envolver este con un
+Expanded.
+
+109. Si agregamos un texto muy grande en las tareas, se producen 2 líneas. Para eso en el archivo 
+task_tile.dart agregamos un overflow al texto del título del ListTile:
+
+  overflow: TextOverflow.ellipsis,
+
+
+
 
