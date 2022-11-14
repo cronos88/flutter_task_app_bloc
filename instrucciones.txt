@@ -758,3 +758,320 @@ para seleccionar el nombre, luego presionamos CTRL + . y seleccionamos la opcion
     return state.toMap();
   }
 
+  AÑADIENDO BOTTOM NAVIGATOR BAR
+  ==============================
+
+76. En la carpeta screens/ creamos otro archivo llamado tabs_screen.dart :
+
+  class TabsScreen extends StatelessWidget {
+    const TabsScreen({super.key});
+
+    static const id = 'tabs_screen';
+
+    @override
+    Widget build(BuildContext context) {
+      return Container();
+    }
+  }
+
+77. En my_drawer.dart, reemplazamos el Navigator de 'my tasks' por esta línea:
+
+  Navigator.of(context).pushReplacementNamed(TabsScreen.id),
+
+78. En el main.dart, cambiamos el home para que apunte a TabsScreen().
+
+79. En task_screen.dart, seleccionamos el método _addTask y lo cortamos. En tabs_screen.dart pegamos el
+método antes del método build(). También cambiamos el Container por un Scaffold:
+
+  @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Tabs Screen'),
+          actions: const [],
+        ),
+      );
+    }
+
+80. En tasks_screen.dart, seleccionamos el actions del Scaffold y lo cortamos. Luego lo pegamos en el 
+Scaffold de tabs_screen.dart.
+
+81. En tabs_screen.dart, el la propiedad drawer use MyDrawer() y el body TasksScreen(), después lo cambiamos:
+
+  drawer: const MyDrawer(),
+  body: const TaskScreen(),
+
+82. En task_screen.dart cortamos el boton FloatingActionButton y luego lo pegamos en tabs_screen.dart.
+83. En tabs_screen.dart implementamos la propiedad bottomNavigationBar, debajo del floatingActionButton, y
+establecemos las propiedades manualmente. 
+
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {},
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.incomplete_circle_sharp),
+            label: 'Pending Tasks'
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.done),
+            label: 'Completed Tasks'
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favorite Tasks'
+          ),
+        ],
+      ),
+
+84. En services/app_router.dart, cambiamos el segundo case para que ya no sea TasksScreen.id, sino
+TabsScreen.id:
+
+      case TabsScreen.id:
+        return MaterialPageRoute(
+          builder: (_) => const TabsScreen(),
+        );
+
+85. Como estamos viendo doble AppBar, entonces vamos a tasks_screen.dart y removemos Scaffold().
+
+Configuración de los Navigator Bars
+------------------------------------
+86. Cambiamos el nombre del archivo task_screen.dart por pending_tasks_screen.dart y cambiamos también el nombre
+de la clase a PendingTasksScreen.
+
+87. Creamos dos nuevos archivos en la carpeta screens/, llamados completed_tasks_screen.dart y
+favorite_tasks_screen.dart.
+
+88. PendingScreen lo convertimos a StatelessWidget.
+89. Copiamos todo el contenido de pending_screen.dart y lo pegamos en completed_tasks_screen.dart y tambien
+en favorite_tasks_screen.dart. Cambiar también los nombres de las clases con su correspondiente nombre.
+
+90. Vamos al archivo tabs_screen.dart y antes del método _addTask() vamos a crear una lista de las
+páginas del BottomNavigationBar:
+
+  final List<Map<String, dynamic>> _pageDetails = [
+    {'pageName': PendingTasksScreen(), 'title': 'Pending Tasks'},
+    {'pageName': CompletedTasksScreen(), 'title': 'Completed Tasks'},
+    {'pageName': FavoriteTasksScreen(), 'title': 'Favorite Tasks'},
+  ];
+
+91. Luego, creamos una variable que almacena el indice de la página seleccionada.
+
+  var _selectedPageIndex = 0;
+
+92. En el BottomNavigationBar, el current index tome la variable _selectedPageIndex, y en el onTap, que
+_selectedPageIndex sea igual al index y dentro de un setState para cambiar que refresque la pantalla. 
+Para actualizar _selectedPageIndex, necesitamos cambiar TabsScreen a StatefulWidget:
+
+    currentIndex: _selectedPageIndex,
+    onTap: (index) {
+      setState(() {
+        _selectedPageIndex = index;
+      });
+    },
+
+93. Ahora, necesitamos cambiar el body de acuerdo al indice de la página seleccionada:
+
+  body: _pageDetails[_selectedPageIndex]['pageName'],
+
+  y el title del Scaffold hacemos lo mismo:
+
+    title: Text(_pageDetails[_selectedPageIndex]['title']),
+
+94. Agregamos unas tareas, pero al hacer clic en cada una de las páginas del BottomNavigationBar, las
+mismas tareas se ven, lo cual no es una buena idea, ya que cada página debe de mostrar las tareas pendientes,
+las completadas y las favoritas. Para eso, vamos a bloc/tasks_bloc/tasks_state.dart y agergamos las
+tareas de completed y favorite. Y cambiamos allTasks por pendingTasks:
+
+class TasksState extends Equatable {
+  final List<Task> pendingTasks;
+  final List<Task> completedTasks;
+  final List<Task> favoriteTasks;
+  final List<Task> removedTasks;
+
+  const TasksState({
+    this.pendingTasks = const <Task>[],
+    this.completedTasks = const <Task>[],
+    this.favoriteTasks = const <Task>[],
+    this.removedTasks = const <Task>[],
+  });
+
+  @override
+  List<Object> get props =>
+      [pendingTasks, completedTasks, favoriteTasks, removedTasks];
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'pendingTasks': pendingTasks.map((x) => x.toMap()).toList(),
+      'completedTasks': completedTasks.map((x) => x.toMap()).toList(),
+      'favoriteTasks': favoriteTasks.map((x) => x.toMap()).toList(),
+      'removedTasks': removedTasks.map((x) => x.toMap()).toList(),
+    };
+  }
+
+  factory TasksState.fromMap(Map<String, dynamic> map) {
+    return TasksState(
+      pendingTasks: List<Task>.from(
+          (map['pendingTasks']?.map<Task>((x) => Task.fromMap(x)))),
+      completedTasks: List<Task>.from(
+          (map['completedTasks']?.map<Task>((x) => Task.fromMap(x)))),
+      favoriteTasks: List<Task>.from(
+          (map['favoriteTasks']?.map<Task>((x) => Task.fromMap(x)))),
+      removedTasks: List<Task>.from(
+          (map['removedTasks']?.map<Task>((x) => Task.fromMap(x)))),
+    );
+  }
+}
+
+95. Vamos al archivo task_bloc.dart y hacemos unos cambios:
+
+class TasksBloc extends HydratedBloc<TasksEvent, TasksState> {
+  TasksBloc() : super(const TasksState()) {
+    on<AddTask>(_onAddTask);
+    on<UpdateTask>(_onUpdateTask);
+    on<DeleteTask>(_onDeleteTask);
+    on<RemoveTask>(_onRemoveTask);
+  }
+
+  void _onAddTask(AddTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    emit(TasksState(
+      pendingTasks: List.from(state.pendingTasks)..add(event.task),
+      completedTasks: state.completedTasks, // AÑADIR LINEA
+      favoriteTasks: state.favoriteTasks, // AÑADIR LINEA
+      removedTasks: state.removedTasks,
+    ));
+  }
+
+  void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+    final task = event.task;
+    // final int index = state.pendingTasks.indexOf(task); BORRAR LINEA
+
+    List<Task> pendingTasks = state.pendingTasks; //CAMBIAMOS ESTA LINEA
+    List<Task> completedTasks = state.completedTasks; //AÑADIMOS ESTA LINEA
+    task.isDone == false
+        ? {
+            pendingTasks = List.from(pendingTasks)..remove(task),
+            completedTasks = List.from(completedTasks)
+              ..insert(0, task.copyWith(isDone: true)),
+          } //CAMBIAMOS ESTA LINEA
+        : {
+            completedTasks = List.from(completedTasks)..remove(task),
+            pendingTasks = List.from(pendingTasks)
+              ..insert(0, task.copyWith(isDone: false)),
+          }; // CAMBIAMOS ESTA LINEA
+
+    emit(TasksState(
+      pendingTasks: pendingTasks,
+      completedTasks: completedTasks, //AÑADIR LINEA
+      favoriteTasks: state.favoriteTasks, //AÑADIR LINEA
+      removedTasks: state.removedTasks,
+    ));
+  }
+
+  void _onRemoveTask(RemoveTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+
+    emit(TasksState(
+      pendingTasks: List.from(state.pendingTasks)..remove(event.task),
+      completedTasks: List.from(state.completedTasks)
+        ..remove(event.task), // AÑADIR LINEA
+      favoriteTasks: List.from(state.favoriteTasks)
+        ..remove(event.task), // AÑADIR LINEA
+      removedTasks: List.from(state.removedTasks)
+        ..add(event.task.copyWith(isDeleted: true)),
+    ));
+  }
+
+  void _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) {
+    final state = this.state;
+
+    emit(TasksState(
+      pendingTasks: state.pendingTasks,
+      completedTasks: state.completedTasks, // AÑADIR LINEA
+      favoriteTasks: state.favoriteTasks, // AÑADIR LINEA
+      removedTasks: List.from(state.removedTasks)..remove(event.task),
+    ));
+  }
+
+  @override
+  TasksState? fromJson(Map<String, dynamic> json) {
+    return TasksState.fromMap(json);
+  }
+
+  @override
+  Map<String, dynamic>? toJson(TasksState state) {
+    return state.toMap();
+  }
+}
+
+96. Ahora vamos a la pantalla completed_tasks_screen.dart y cambiamos el BlocBuilder para que
+tome el estado de completedTasks:
+
+    return BlocBuilder<TasksBloc, TasksState>(
+      builder: (context, state) {
+        final List<Task> taskList = state.completedTasks; // cambiamos linea
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Center(
+              child: Chip(
+                label: Text('${taskList.length} Tasks'), // cambiamos linea
+              ),
+            ),
+            TasksList(taskList: taskList),
+          ],
+        );
+      },
+    );
+
+97. En la pantalla favorite_tasks_screen.dart hacemos lo mismo en el BlocBuilder:
+
+    return BlocBuilder<TasksBloc, TasksState>(
+      builder: (context, state) {
+        final List<Task> taskList = state.favoriteTasks; // cambiamos linea
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Center(
+              child: Chip(
+                label: Text('${taskList.length} Tasks'), // cambiamos linea
+              ),
+            ),
+            TasksList(taskList: taskList),
+          ],
+        );
+      },
+    );
+
+98. En la pantalla pending_tasks_screen.dart cambiamos el Chip para que muestre las tareas pendientes y
+las completadas:
+
+            Center(
+              child: Chip(
+                label: Text(
+                    '${taskList.length} Pending | ${state.completedTasks.length} Completed'),
+              ),
+            ),
+
+99. En el Drawer hacemos un cambio, para eso vamos al archivo my_drawer.dart y en el trailing del
+ListTile de las tareas lo dejamos así:
+
+  child: ListTile(
+    leading: const Icon(Icons.folder_special),
+    title: const Text('My Tasks'),
+    trailing: Text('${state.pendingTasks.length} | ${state.completedTasks.length}'), // cambiamos aqui
+  ),
+
+100. Ahora, necesitamos desaparecer el FloatingActionButton en la pagina de completedTasks y
+FavoriteTasksScreen, para eso, en tabs_screen.dart colocamos una condicion en el floatingActionButton:
+
+      floatingActionButton: _selectedPageIndex == 0 ? FloatingActionButton(
+        onPressed: () => _addTask(context),
+        tooltip: 'Add Task',
+        child: const Icon(Icons.add),
+      ) : null,
+
+ 
+
